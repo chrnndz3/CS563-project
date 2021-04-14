@@ -45,10 +45,10 @@ for index, row in df.iterrows():
             file_bs4tree = bs4.BeautifulSoup(file_html, 'html.parser')
             line_count += len(file_bs4tree.find('table', {'class': 'js-file-line-container'}))/2
             if line_count >= LINE_THRESHOLD:
-                print("Not Micropackage " + github_url)
+                print("This is a Micropackage " + github_url)
                 break
         if line_count < LINE_THRESHOLD:
-            print("This is a Micropackage " + github_url)
+            print("This is NOT a Micropackage " + github_url)
     except:
         print('Error at Github parsing')
         continue
