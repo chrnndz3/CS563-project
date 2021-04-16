@@ -1,4 +1,5 @@
-const registry = require('all-the-package-names')
+var _ = require('lodash');
+const registry = _.shuffle(require('all-the-package-names'))
 const fs = require('fs')
 const package_names = registry.slice(0,25)
 const url = 'https://www.npmjs.com/package/'

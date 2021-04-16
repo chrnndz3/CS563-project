@@ -12,6 +12,16 @@ def install_and_import(package):
     finally:
         globals()[package] = importlib.import_module(package)
 
+def count_line_number(code_rows):
+    result = 0
+    for i in code_rows:
+        row_items = i.findChildren()
+        if not row_items:
+            continue
+        result += 1 if row_items[0]["class"][0] != 'pl-c' else 0
+    return result
+
+
 # Install dependencies if necessary
 install_and_import("bs4")
 install_and_import("pandas")
@@ -43,12 +53,13 @@ for index, row in df.iterrows():
                 continue
             file_html = urlopen(Request(file_url, headers={'User-Agent': 'Chrome/35.0.1916.47'}))
             file_bs4tree = bs4.BeautifulSoup(file_html, 'html.parser')
-            line_count += len(file_bs4tree.find('table', {'class': 'js-file-line-container'}))/2
+            code_repo = file_bs4tree.find('table', {'class': 'js-file-line-container'})
+            line_count += count_line_number(code_repo.findAll('td', {'class':'js-file-line'}))
             if line_count >= LINE_THRESHOLD:
-                print("This is a Micropackage " + github_url)
+                print("This is NOT a Micropackage " + github_url)
                 break
         if line_count < LINE_THRESHOLD:
-            print("This is NOT a Micropackage " + github_url)
+            print("This is a Micropackage " + github_url)
     except:
         print('Error at Github parsing')
         continue
