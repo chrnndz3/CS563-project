@@ -1,9 +1,8 @@
 import json
 import requests as requests
 from bs4 import BeautifulSoup
-import re
 
-# Global variables
+# Initialized variables
 registry_url = 'https://registry.npmjs.com/'
 replicate_url = 'https://replicate.npmjs.com/'
 npmjs_url = 'https://www.npmjs.com/package/'
