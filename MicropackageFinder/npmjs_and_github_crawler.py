@@ -7,6 +7,19 @@ count = 1
 username = "chrnndz3"
 password = "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"
 
+""" Returns the number of source code in a single js file
+@code_rows: 
+"""
+def count_line_number(js_bs4tree):
+    code_repo = js_bs4tree.find('table', {'class': 'js-file-line-container'})
+    code_rows = code_repo.findAll('td', {'class':'js-file-line'})
+    result = 0
+    for i in code_rows:
+        row_items = i.findChildren()
+        if not row_items:
+            continue
+        result += 1 if row_items[0]["class"][0] != 'pl-c' else 0
+    return result
 
 # Crawler for npmjs
 def crawler(package_name, npm_url):
@@ -36,7 +49,6 @@ def main(df):
     for index, row in df.iterrows():
         package_name = row['name']
         npmjs_url = row['npm-url']
-
         # Retrieve github url from npmjs url
         github_url = crawler(package_name, npmjs_url)
         github_url_request = requests.get(github_url)
@@ -72,7 +84,10 @@ def main(df):
                     download_url = data_contents['download_url'] if ("download_url" in data_contents) else print(
                         "[Error] Download url doesn't exists for: " + github_url_contents)
                     download_url_request = requests.get(download_url, auth=(username, password))
-                    file_content = download_url_request.text
+                    js_file_content = download_url_request.text
+
+                    js_file_bs4tree = bs4.BeautifulSoup(js_file_content, 'html.parser')
+                    print(count_line_number(js_file_bs4tree))
                     # TODO: Parse the file content to get the number of lines
                     # print(file_content)
                     # break
@@ -80,7 +95,7 @@ def main(df):
             print("[Error] Github url " + github_url + " is not working, status code is: " + github_url_request.status_code)
 
         print("[Info] Done with package: " + package_name)
-        # break
+        break
 
 
 if __name__ == "__main__":
