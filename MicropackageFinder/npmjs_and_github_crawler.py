@@ -9,7 +9,7 @@ import requests
 # Initialized variables
 count = 1
 username = 'chrnndz3'
-token = "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"
+token = "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"
 
 """ Returns the number of source code in a single js file
 @code_rows: 
@@ -104,11 +104,15 @@ def main(df):
                         "[Error] Tree array doesn't exist in: " + github_url_trees)
 
                     # Only retrieve the javascript files from a repo
+                    # TODO: Should we also include extension '.ts'?
                     js_paths = []
                     for object in tree_array:
                         path = object['path']
                         if path.endswith('.js'):
                             js_paths.append(path)
+
+                    if len(js_paths) == 0:
+                        break
 
                     # Go into each javascript file to get the total number of code lines
                     for js_path in js_paths:
