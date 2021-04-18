@@ -115,12 +115,10 @@ def main(df):
             except:
                 print("[Error] Issue with the following package: " + package_name)
                 continue
-            break
-            # print("[Info] Done with package: " + package_name)
-            # break
+            print("[Info] Done with package: " + package_name)
         else:
             print("[Skip] Github link doesn't exist for: " + package_name)
-            break
+            continue
 
 
 if __name__ == "__main__":
