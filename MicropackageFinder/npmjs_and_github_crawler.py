@@ -96,7 +96,6 @@ def main(df):
                     default_branch = github_url_repos_data["default_branch"] if (
                             "default_branch" in github_url_repos_data) else print(
                         "[Error] Default branch doesn't exist for: " + package_name)
-                    # github_url_trees = "https://api.github.com/repos/" + user_repo + "/git/trees/" + default_branch + "?recursive=1"
                     github_url_trees = github_url_user_repo + "/git/trees/" + default_branch + "?recursive=1"
 
                     # retrieve the data in json
@@ -113,7 +112,6 @@ def main(df):
 
                     # Go into each javascript file to get the total number of code lines
                     for js_path in js_paths:
-                        # github_url_content = "https://api.github.com/repos/" + user_repo + "/contents/" + js_path
                         github_url_content = github_url_user_repo + "/contents/" + js_path
                         data_contents = requests.get(github_url_content, headers=headers).json()
                         download_url = data_contents['download_url'] if ("download_url" in data_contents) else print(
@@ -127,7 +125,7 @@ def main(df):
 
                     # Append the package with the status of the package (either it's micropackage or not)
                     if line_count <= MICROPACKAGE_LINE_THRESHOLD:
-                        print("[Info] " + package_name + " is a micropackage")
+                        print("[Info] " + package_name + " is a micropackage, total number of code lines: " + str(line_count))
                         micropackage_csv.write(package_name + ", " + "Micropackage\n")
                     else:
                         print("[Info] " + package_name + " is NOT a micropackage")
