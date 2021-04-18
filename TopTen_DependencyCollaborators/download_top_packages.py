@@ -1,4 +1,6 @@
 import json
+import traceback
+
 import requests as requests
 from bs4 import BeautifulSoup
 
@@ -8,7 +10,7 @@ replicate_url = 'https://replicate.npmjs.com/'
 npmjs_url = 'https://www.npmjs.com/package/'
 top_ten_packages_list = ["lodash", "chalk", "request", "commander", "react", "express", "debug", "async", "fs-extra",
                          "moment"]
-file = open("../OldJson/top_ten_packages.json", "w")
+file = open("../TopTen_DependencyCollaborators/top_ten_packages.json", "w")
 
 
 # Crawler for npmjs
@@ -30,6 +32,7 @@ def crawler(package_name):
             collaborators_list.append(username)
     except:
         print('[Error] while crawling npmjs for package: ' + package_name + ' and url: ' + url)
+        traceback.print_exc()
         return collaborators_list
 
     return collaborators_list
@@ -62,6 +65,7 @@ def metadata_extraction(package_name):
     except:
         print("URL: " + url)
         print('[Error] at metadata_extraction_dependencies while retrieving data from ' + package_name)
+        traceback.print_exc()
 
     # Retreive the dependencies, dev dependencies, contributors
     # (should we get the maintainers? what's the difference between contributors and maintainers?)

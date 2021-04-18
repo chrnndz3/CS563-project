@@ -1,15 +1,21 @@
+import json
+import os
+import traceback
+
 import bs4
 import pandas
 import requests
 
 # Initialized variables
 count = 1
-token = "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"
+username = 'chrnndz3'
+token = "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"
 
 """ Returns the number of source code in a single js file
 @code_rows: 
 """
 MICROPACKAGE_LINE_THRESHOLD = 50
+
 
 def count_line_number(js_file):
     # TODO Exclude comments
@@ -17,7 +23,7 @@ def count_line_number(js_file):
     line_length = 0
     for i in range(len(js_file)):
         line_length += 1
-        if (js_file[i] == '\\' and js_file[i+1] == '\\') or (js_file[i] == '\n' and line_length == 1):
+        if (js_file[i] == '\\' and js_file[i + 1] == '\\') or (js_file[i] == '\n' and line_length == 1):
             while js_file[i] != '\n':
                 i += 1
             line_length = 0
@@ -44,6 +50,7 @@ def crawler(package_name, npm_url):
                 print("[Info] Github link: " + github_url)
     except:
         print('[Error] while crawling npmjs for package: ' + package_name + ' and url: ' + npmjs_url)
+        traceback.print_exc()
         return github_url
 
     return github_url
@@ -54,7 +61,8 @@ def check_github_url(package_name, github_url):
         if (github_url is not None) and ("github.com" in github_url):
             return True
     except:
-        print("[Info] Issue with " + package_name + " github url: " + str(github_url))
+        print("[Error] Issue with " + package_name + " github url: " + str(github_url))
+        traceback.print_exc()
 
     return False
 
@@ -73,55 +81,72 @@ def main(df):
         # Check the github link works and hasn't been deprecated
         if github_url_exists:
             user_repo = github_url.replace('https://github.com/', '')
-            github_url_repos = "https://api.github.com/repos/" + user_repo
-            headers = {'Authorization': 'access_token %s' % token}
-            github_url_repos_request = requests.get(github_url_repos, headers=headers)
+            github_url_user_repo = "https://api.github.com/repos/" + user_repo
+            headers = {'Authorization': f'token {token}', 'Accept': 'application/vnd.github.v3+json'}
+            github_url_repos_request = requests.get(github_url_user_repo, headers=headers)
 
             try:
                 if "200" != str(github_url_repos_request.status_code):
-                    print("[Info] Github API is not 200 for: " + package_name + " " + str(github_url_repos_request.status_code))
+                    print("[Info] Github API is not 200 for: " + package_name + " " + str(
+                        github_url_repos_request.status_code))
                     print("[Info] " + github_url_repos_request.text)
                     continue
                 else:
-                    github_url_repos_data = requests.get(github_url_repos, headers=headers).json()
+                    github_url_repos_data = requests.get(github_url_user_repo, headers=headers).json()
                     default_branch = github_url_repos_data["default_branch"] if (
                             "default_branch" in github_url_repos_data) else print(
                         "[Error] Default branch doesn't exist for: " + package_name)
-                    github_url_trees = "https://api.github.com/repos/" + user_repo + "/git/trees/" + default_branch + "?recursive=1"
+                    # github_url_trees = "https://api.github.com/repos/" + user_repo + "/git/trees/" + default_branch + "?recursive=1"
+                    github_url_trees = github_url_user_repo + "/git/trees/" + default_branch + "?recursive=1"
 
                     # retrieve the data in json
                     github_url_trees_data = requests.get(github_url_trees, headers=headers).json()
                     tree_array = github_url_trees_data['tree'] if ("tree" in github_url_trees_data) else print(
                         "[Error] Tree array doesn't exist in: " + github_url_trees)
 
-                    # only retrieve the javascript files from a repo
+                    # Only retrieve the javascript files from a repo
                     js_paths = []
                     for object in tree_array:
                         path = object['path']
                         if path.endswith('.js'):
                             js_paths.append(path)
 
+                    # Go into each javascript file to get the total number of code lines
                     for js_path in js_paths:
-                        github_url_contents = "https://api.github.com/repos/" + user_repo + "/contents/" + js_path
-                        data_contents = requests.get(github_url_contents, headers=headers).json()
+                        # github_url_content = "https://api.github.com/repos/" + user_repo + "/contents/" + js_path
+                        github_url_content = github_url_user_repo + "/contents/" + js_path
+                        data_contents = requests.get(github_url_content, headers=headers).json()
                         download_url = data_contents['download_url'] if ("download_url" in data_contents) else print(
-                            "[Error] Download url doesn't exists for: " + github_url_contents)
+                            "[Error] Download url doesn't exists for: " + github_url_content)
                         download_url_request = requests.get(download_url, headers=headers)
                         js_file_content = download_url_request.text
                         line_count += count_line_number(js_file_content)
+
                         if line_count > MICROPACKAGE_LINE_THRESHOLD:
-                            print("This is NOT a micropackage")
                             break
+
+                    # Append the package with the status of the package (either it's micropackage or not)
+                    if line_count <= MICROPACKAGE_LINE_THRESHOLD:
+                        print("[Info] " + package_name + " is a micropackage")
+                        micropackage_csv.write(package_name + ", " + "Micropackage\n")
+                    else:
+                        print("[Info] " + package_name + " is NOT a micropackage")
+                        micropackage_csv.write(package_name + ", " + "Not\n")
+
+                    # break
             except:
                 print("[Error] Issue with the following package: " + package_name)
-                continue
+                traceback.print_exc()
+
             print("[Info] Done with package: " + package_name)
         else:
             print("[Skip] Github link doesn't exist for: " + package_name)
-            continue
+        # break
 
 
 if __name__ == "__main__":
     df = pandas.read_csv('package-names.csv', names=['name', 'npm-url'])
+    micropackage_csv = open("../MicropackageFinder/micropackage.csv", "w+")
     main(df)
+    micropackage_csv.close()
     print('[Info] ----- Program has completed -----')
