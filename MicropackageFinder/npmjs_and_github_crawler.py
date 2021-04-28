@@ -8,8 +8,8 @@ import requests
 
 # Initialized variables
 count = 1
-username = 'chrnndz3'
-token = "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"
+username = 'ImBerkayKaplan'
+token = "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"
 
 """ Returns the number of source code in a single js file
 @code_rows: 
